@@ -6,7 +6,7 @@ import akka.util.ByteString
 
 import java.net.InetSocketAddress
 
-object BasicNetworkExamples {
+object BasicNetwork {
 
   object Client {
     def props(remote: InetSocketAddress, replies: ActorRef) =

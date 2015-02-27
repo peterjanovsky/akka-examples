@@ -1,6 +1,6 @@
 package com.pjanof.io
 
-import BasicNetworkExamples._
+import BasicNetwork._
 
 import akka.actor.{ Actor, ActorSystem, Props }
 import akka.io.Tcp
