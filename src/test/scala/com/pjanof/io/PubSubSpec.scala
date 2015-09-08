@@ -1,6 +1,6 @@
 package com.pjanof.io
 
-import BasicNetwork._
+import PubSub._
 
 import akka.actor.{ Actor, ActorSystem, Props }
 import akka.io.Tcp
@@ -13,10 +13,10 @@ import org.scalatest.WordSpecLike
 import org.scalatest.Matchers
 import org.scalatest.BeforeAndAfterAll
 
-class BasicNetworkSpec(_system: ActorSystem) extends TestKit(_system)
+class PubSubSpec(_system: ActorSystem) extends TestKit(_system)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
-  def this() = this(ActorSystem("BasicNetworkSpec"))
+  def this() = this(ActorSystem("PubSubSpec"))
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
@@ -29,24 +29,40 @@ class BasicNetworkSpec(_system: ActorSystem) extends TestKit(_system)
     }
   }
 
-  "connect with send with close" in {
+  "connect multiple clients with send with close" in {
 
     val server = system.actorOf(Props(classOf[Parent], this), "parent")
     val listen = expectMsgType[Tcp.Bound].localAddress
 
-    val client = system.actorOf(Client.props(listen, testActor), "client")
+    val client1 = system.actorOf(Client.props(listen, testActor), "client1")
 
-    watch(client)
+    watch(client1)
 
     val c1, c2 = expectMsgType[Tcp.Connected]
     c1.localAddress should be(c2.remoteAddress)
     c2.localAddress should be(c1.remoteAddress)
 
-    client ! ByteString("hello")
-    expectMsgType[ByteString].utf8String should be("hello")
+    val client2 = system.actorOf(Client.props(listen, testActor), "client2")
 
-    client ! "close"
+    watch(client2)
+
+    val c3, c4 = expectMsgType[Tcp.Connected]
+    c3.localAddress should be(c4.remoteAddress)
+    c4.localAddress should be(c3.remoteAddress)
+
+    client1 ! ByteString("foo")
+    expectMsgType[ByteString].utf8String should be("foo")
+
+    client2 ! ByteString("bar")
+    expectMsgType[ByteString].utf8String should be("bar")
+    expectMsgType[ByteString].utf8String should be("bar")
+
+    client1 ! "close"
     expectMsg("connection closed")
-    expectTerminated(client, 1.second)
+    expectTerminated(client1, 1.second)
+
+    client2 ! "close"
+    expectMsg("connection closed")
+    expectTerminated(client2, 1.second)
   }
 }
