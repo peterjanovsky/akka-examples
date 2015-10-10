@@ -94,26 +94,28 @@ object PubSub {
 
         log.info(s"Handler: [ $handler ]")
         log.info(s"Sender: [ $sender ]")
+        log.info(s"TCP Connection: [ $connection ]")
 
-        context.become(connected(Set(sender)))
+        context.become(connected(Set(connection)))
 
       case unhandled =>
         log.info(s"Server Received: [ Case Not Handled - $unhandled ]")
     }
 
-    def connected(handlers: Set[ActorRef]): Receive = {
+    def connected(connections: Set[ActorRef]): Receive = {
 
       case c @ Connected(remote, local) =>
         log.info(s"Server Connected: [ $remote ] with [ $local ]")
         context.parent ! c
-        val handler = context.actorOf(SimplisticHandler.props(handlers))
+        val handler = context.actorOf(SimplisticHandler.props(connections))
         val connection = sender()
         connection ! Register(handler)
 
-        log.info(s"Handlers: [ ${handlers + sender} ]")
+        log.info(s"Handler: [ $handler ]")
         log.info(s"Sender: [ $sender ]")
+        log.info(s"TCP Connections: [ ${connections + connection} ]")
 
-        context.become(connected(handlers + sender))
+        context.become(connected(connections + connection))
 
       case unhandled =>
         log.info(s"Server Received: [ Case Not Handled - $unhandled ]")
@@ -121,11 +123,11 @@ object PubSub {
   }
 
   object SimplisticHandler {
-    def props(otherHandlers: Set[ActorRef]) =
-      Props(classOf[SimplisticHandler], otherHandlers)
+    def props(connections: Set[ActorRef]) =
+      Props(classOf[SimplisticHandler], connections)
   }
 
-  class SimplisticHandler(otherHandlers: Set[ActorRef]) extends Actor with ActorLogging {
+  class SimplisticHandler(connections: Set[ActorRef]) extends Actor with ActorLogging {
 
     import Tcp._
 
@@ -134,9 +136,9 @@ object PubSub {
         log.info(s"Handler Received: [ $data ]")
         sender() ! Write(data)
 
-        otherHandlers.map { handler => {
-          log.info(s"Writing to Handler: $handler")
-          handler ! Write(data)
+        connections.map { connection => {
+          log.info(s"Writing to TCP Connection: $connection")
+          connection ! Write(data)
         } }
 
       case PeerClosed =>
