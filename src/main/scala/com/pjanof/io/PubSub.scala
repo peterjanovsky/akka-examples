@@ -19,10 +19,10 @@ object PubSub {
     import context.system
 
     /**
-     * The manager is an actor which
-     *   - handles underlying low level I/O ( selectors, channels )
-     *   - instantiates workers for specific tasks ( ex: listening to incoming connections )
-     */
+      * The manager is an actor which
+      *   - handles underlying low level I/O ( selectors, channels )
+      *   - instantiates workers for specific tasks ( ex: listening to incoming connections )
+      */
     IO(Tcp) ! Connect(remote)
 
     def receive = {
