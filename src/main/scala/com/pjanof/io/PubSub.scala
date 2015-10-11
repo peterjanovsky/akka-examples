@@ -88,7 +88,7 @@ object PubSub {
       case c @ Connected(remote, local) =>
         log.info(s"Server Connected: [ $remote ] with [ $local ]")
         context.parent ! c
-        val handler = context.actorOf(SimplisticHandler.props(Set.empty[ActorRef]))
+        val handler = context.actorOf(ConnectionHandler.props(Set.empty[ActorRef]))
         val connection = sender()
         connection ! Register(handler)
 
@@ -107,7 +107,7 @@ object PubSub {
       case c @ Connected(remote, local) =>
         log.info(s"Server Connected: [ $remote ] with [ $local ]")
         context.parent ! c
-        val handler = context.actorOf(SimplisticHandler.props(connections))
+        val handler = context.actorOf(ConnectionHandler.props(connections))
         val connection = sender()
         connection ! Register(handler)
 
@@ -122,12 +122,12 @@ object PubSub {
     }
   }
 
-  object SimplisticHandler {
+  object ConnectionHandler {
     def props(connections: Set[ActorRef]) =
-      Props(classOf[SimplisticHandler], connections)
+      Props(classOf[ConnectionHandler], connections)
   }
 
-  class SimplisticHandler(connections: Set[ActorRef]) extends Actor with ActorLogging {
+  class ConnectionHandler(connections: Set[ActorRef]) extends Actor with ActorLogging {
 
     import Tcp._
 

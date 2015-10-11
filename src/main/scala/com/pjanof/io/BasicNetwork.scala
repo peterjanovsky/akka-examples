@@ -84,7 +84,7 @@ object BasicNetwork {
       case c @ Connected(remote, local) =>
         log.info(s"Server Connected: [ $remote ] with [ $local ]")
         context.parent ! c
-        val handler = context.actorOf(Props[SimplisticHandler])
+        val handler = context.actorOf(Props[ConnectionHandler])
         val connection = sender()
         connection ! Register(handler)
 
@@ -93,7 +93,7 @@ object BasicNetwork {
     }
   }
 
-  class SimplisticHandler extends Actor with ActorLogging {
+  class ConnectionHandler extends Actor with ActorLogging {
 
     import Tcp._
 
