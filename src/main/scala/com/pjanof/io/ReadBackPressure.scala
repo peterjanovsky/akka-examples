@@ -9,19 +9,19 @@ import java.net.InetSocketAddress
 
 /**
   * background
-  *  with push based reading
-  *    data coming from the socket is sent to the actor when it's available
-  *    requires maintaining a buffer of incoming data as the rate of writing may be slower than the data arrival rate
+  *   with push based reading
+  *     data coming from the socket is sent to the actor when it's available
+  *     requires maintaining a buffer of incoming data as the rate of writing may be slower than the data arrival rate
   *
   *  with pull mode
-  *    this buffer is eliminated
-  *    reading resumes after the previous write has been completely acknowledged by the connection actor
-  *    connection actors start from suspended state
-  *    to start the flow of data
-  *      send ResumeReading in the preStart method
-  *      informs the connection actor we are ready to receive the first chunk of data
-  *    no need for maintaining a buffer
-  *      as reading resumes only when the previous data chunk has been completely written
+  *     this buffer is eliminated
+  *     reading resumes after the previous write has been completely acknowledged by the connection actor
+  *     connection actors start from suspended state
+  *     to start the flow of data
+  *       send ResumeReading in the preStart method
+  *       informs the connection actor we are ready to receive the first chunk of data
+  *     no need for maintaining a buffer
+  *       as reading resumes only when the previous data chunk has been completely written
   */
 object ReadBackPressure {
 
