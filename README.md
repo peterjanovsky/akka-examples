@@ -16,6 +16,14 @@ Client / Server where
 
 ## Back-Pressure
 
+TCP connection actor doesn't have internal buffering
+
+### [ACK-Based Write Back-Pressure](src/main/scala/com/pjanof/io/WriteBackPressure.scala)
+
+Back-Pressure management where
+* Write command carries an arbitrary object
+* Object returned to sender upon successfully writing all data to the socket
+
 ### [Read Back-Presssure with Pull Mode](src/main/scala/com/pjanof/io/ReadBackPressure.scala)
 
 Back-Pressure management where
