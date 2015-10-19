@@ -16,7 +16,7 @@ import java.net.InetSocketAddress
   *
   * modes of back-pressuring writes
   *   ACK-based
-  *     Wrire command carries an arbitrary object
+  *     Write command carries an arbitrary object
   *       if object is not Tcp.NoAck it will be returned to the sender of the Write
   *         happens after successfully writing all contained data to the socket
   *       write initiated before receiving acknowledgement results in buffer overrun
