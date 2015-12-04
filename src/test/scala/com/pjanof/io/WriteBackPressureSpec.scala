@@ -42,8 +42,18 @@ class WriteBackPressureSpec(_system: ActorSystem) extends TestKit(_system)
     c1.localAddress should be(c2.remoteAddress)
     c2.localAddress should be(c1.remoteAddress)
 
+/*
     client ! ByteString("foo")
     expectMsgType[ByteString].utf8String should be ("foo")
+
+    client ! ByteString("bar")
+    expectMsgType[ByteString].utf8String should be ("bar")
+*/
+    client ! ByteString("foo")
+    client ! ByteString("bar")
+    client ! ByteString("baz")
+    expectMsgType[ByteString].utf8String should be ("foobar")
+    expectMsgType[ByteString].utf8String should be ("baz")
 
     client ! "close"
     expectMsg("connection closed")
