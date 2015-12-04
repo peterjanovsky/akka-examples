@@ -6,6 +6,8 @@ import akka.util.ByteString
 
 import com.typesafe.config.{ Config, ConfigFactory }
 
+import com.pjanof.io.actors.{ InstrumentedActor, TrackingActor }
+
 import java.net.InetSocketAddress
 
 /**
@@ -63,27 +65,30 @@ object WriteBackPressure {
       Props(classOf[Client], remote, replies)
   }
 
-  class Client(remote: InetSocketAddress, listener: ActorRef) extends Actor with ActorLogging {
+  class Client(remote: InetSocketAddress, listener: ActorRef) extends Actor
+    with ActorLogging with InstrumentedActor {
 
     import Tcp._
     import context.system
 
     IO(Tcp) ! Connect(remote)
 
-    def receive = {
+    def wrappedReceive: Receive = {
       case CommandFailed(_: Connect) =>
         log.info("Client Command Failed")
         listener ! "connect failed"
         context stop self
 
       case c @ Connected(remote, local) =>
-        log.info(s"Client Connected: [ $remote ] with [ $local ]")
+        log.info(s"Client Connected [ $uuid ]: [ $remote ] with [ $local ]")
         listener ! c
         val connection = sender()
         connection ! Register(self)
+        log.info(s"Client Sender: $connection")
+
         context become {
           case data: ByteString =>
-            log.info("Client ByteString Received / Written")
+            log.info(s"Client [ $uuid ] ByteString Received / Written")
             connection ! Write(data)
 
           case CommandFailed(w: Write) =>
@@ -92,7 +97,7 @@ object WriteBackPressure {
             listener ! "write failed"
 
           case Received(data) =>
-            log.info(s"Client Received: [ $data ]")
+            log.info(s"Client Received [ $uuid ]: [ $data ]")
             listener ! data
 
           case "close" =>
@@ -113,7 +118,8 @@ object WriteBackPressure {
     }
   }
 
-  class HandlerManager(handlerClass: Class[_]) extends Actor with ActorLogging {
+  class HandlerManager(handlerClass: Class[_]) extends Actor
+    with ActorLogging with InstrumentedActor {
 
     import Tcp._
     import context.system
@@ -132,10 +138,10 @@ object WriteBackPressure {
     // do not restart
     override def postRestart(thr: Throwable): Unit = context stop self
 
-    def receive = {
+    def wrappedReceive = {
 
       case b @ Bound(localAddress) =>
-        log.info(s"Server Bound: [ $b ] at [ $localAddress ]")
+        log.info(s"Server Bound [ $uuid ]: [ $b ] at [ $localAddress ]")
         context.parent ! b
 
       case CommandFailed(Bind(_, local, _, _, _)) =>
@@ -143,7 +149,7 @@ object WriteBackPressure {
         context stop self
 
       case c @ Connected(remote, local) =>
-        log.info(s"Server Connected: [ $remote ] with [ $local ]") 
+        log.info(s"Server Connected [ $uuid ]: [ $remote ] with [ $local ]") 
         context.parent ! c
         val handler = context.actorOf(Props(handlerClass, sender(), remote))
         sender() ! Register(handler, keepOpenOnPeerClosed = true)
@@ -161,7 +167,8 @@ object WriteBackPressure {
     * while waiting
     *   switch behavior to buffer incoming data
     */
-  class AckHandler(connection: ActorRef, remote: InetSocketAddress) extends Actor with ActorLogging {
+  class AckHandler(connection: ActorRef, remote: InetSocketAddress) extends Actor
+    with ActorLogging with InstrumentedActor {
 
     import Tcp._
 
@@ -170,10 +177,10 @@ object WriteBackPressure {
 
     case object Ack extends Event
 
-    def receive = {
+    def wrappedReceive = {
 
       case Received(data) =>
-        log.info(s"Handler Received: [ $data ]") 
+        log.info(s"Handler Received [ $uuid ]: [ $data ]") 
         buffer(data)
         connection ! Write(data, Ack)
 
@@ -196,7 +203,7 @@ object WriteBackPressure {
         }, discardOld = false)
 
       case PeerClosed =>
-        log.info("Handler Peer Closed")
+        log.info(s"Handler Peer Closed [ $uuid ]")
         context stop self
 
       case unhandled =>

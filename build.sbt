@@ -4,13 +4,17 @@ version := "1.0"
 
 scalaVersion := "2.11.7"
 
-val AkkaVersion = "2.4.0"
-val ScalaTestVersion = "2.2.4"
-
-libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-  "com.typesafe.akka" %% "akka-testkit" % AkkaVersion,
-  "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+resolvers ++= Seq(
+  "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 )
 
-resolvers += "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
+libraryDependencies ++= {
+  val akkaV  = "2.4.0"
+
+  Seq(
+      "com.typesafe.akka"           %% "akka-actor"     % akkaV
+    , "com.typesafe.akka"           %% "akka-testkit"   % akkaV
+    , "com.typesafe.scala-logging"  %% "scala-logging"  % "3.1.0"
+    , "org.scalatest"               %% "scalatest"      % "2.2.4" % "test"
+  )
+}
